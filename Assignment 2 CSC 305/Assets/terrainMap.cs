@@ -36,15 +36,17 @@ public class terrainMap : MonoBehaviour
     float [,] generatePerlinNoise (int num_sample, int frequency)
     {
         Vector2[,] gradients = new Vector2[frequency + 1, frequency + 1];
-        /*Random rnd = new System.Random();
-        
-        for (int i = 0; i < frequency + 1; ++i) 
-        {
-            Vector2 rand_vector = new Vector2(Math.Random.value * 2 - 1, Math.Random.value * 2 - 1);
-            gradients[i] = rand_vector.Normalize();
-        }*/
 
-        Vector2[] edge_centers = new Vector2[4];
+        for (int i = 0; i < frequency + 1; ++i)
+        {
+            for (int j = 0; j < frequency + 1; ++j)
+            {
+                Vector2 rand_vector = new Vector2(Random.value * 2 - 1, Random.value * 2 - 1);
+                gradients[i, j] = rand_vector.normalized;
+            }
+        }
+
+        /*Vector2[] edge_centers = new Vector2[4];
         edge_centers[0] = (new Vector2(0, 1)).normalized;
         edge_centers[1] = (new Vector2(0, -1)).normalized;
         edge_centers[2] = (new Vector2(1, 0)).normalized;
@@ -60,7 +62,7 @@ public class terrainMap : MonoBehaviour
                 if (roll < 0.75f) gradients[i, j] = edge_centers[2];
                 else gradients[i, j] = edge_centers[3];
             }            
-        }
+        }*/
 
         float[,] noise = new float[num_sample, num_sample];
         float period = 1.0f / frequency;
@@ -78,10 +80,10 @@ public class terrainMap : MonoBehaviour
                 float in_cell_location_y = location_period_y - cell_y;
                 Vector2 position = new Vector2(in_cell_location_x, in_cell_location_y);
 
-                Vector2 a = position - new Vector2(0, 0);
-                Vector2 b = position - new Vector2(1, 0);
-                Vector2 c = position - new Vector2(0, 1);
-                Vector2 d = position - new Vector2(1, 1);
+                Vector2 a = position - (new Vector2(0, 0));
+                Vector2 b = position - (new Vector2(1, 0));
+                Vector2 c = position - (new Vector2(0, 1));
+                Vector2 d = position - (new Vector2(1, 1));
                 float s = Vector2.Dot(gradients[cell_x, cell_y], a);
                 float t = Vector2.Dot(gradients[cell_x + 1, cell_y], b);
                 float u = Vector2.Dot(gradients[cell_x, cell_y + 1], c);
@@ -90,8 +92,11 @@ public class terrainMap : MonoBehaviour
                 float st = Mix(s, t, interpolation_function(in_cell_location_x));
                 float uv = Mix(u, v, interpolation_function(in_cell_location_x));
                 noise[i, j] = Mix(st, uv, interpolation_function(in_cell_location_y));
-                
-                Debug.Log(noise[i,j]);
+                if (noise[i, j] < 0.0f)
+                {
+                    noise[i, j] = 0.0f;
+                }
+                //Debug.Log(noise[i,j]);
             }            
         }
         
@@ -140,7 +145,7 @@ public class terrainMap : MonoBehaviour
         uvs = new Vector2[num_vert];
 
         //generate perlin noise here
-        float[,] perlinHeight = generatePerlinNoise(250, 3);
+        float[,] perlinHeight = generatePerlinNoise(250, 5);
 
         for (int i = 0; i < stride-1; i++)
         {
@@ -162,15 +167,7 @@ public class terrainMap : MonoBehaviour
                     cur_z = xz_start + i * step;
                 }
 
-                float cur_y;
-                if (perlinHeight[i, j] >= 0f)
-                {
-                    cur_y = perlinHeight[i, j];
-                }
-                else
-                {
-                    cur_y = 0f;
-                }
+                float cur_y = perlinHeight[i, j];
                 vertices[i * stride + j] = new Vector3(cur_x, cur_y, cur_z);
             }
         }
