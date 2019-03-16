@@ -7,6 +7,9 @@ public class terrainMap : MonoBehaviour
 {
 
     public Material terrainMaterial;
+    public GameObject tree;
+    public GameObject house;
+
 
     // Start is called before the first frame update
     void Start()
@@ -104,6 +107,24 @@ public class terrainMap : MonoBehaviour
         return noise;
     }
 
+    int[] object_placement(float[,] perlinHeight)
+    {
+        int obj_i = Random.Range(1, 250);
+        int obj_j = Random.Range(1, 250);
+
+        while (perlinHeight[obj_i, obj_j] <= 0.1)
+        {
+            obj_i = Random.Range(1, 250);
+            obj_j = Random.Range(1, 250);
+        }
+
+        int[] obj = new int[2];
+        obj[0] = obj_i;
+        obj[1] = obj_j;
+
+        return obj;
+    }
+
     void GenerateTerrainMap()
     {
         Mesh mesh = gameObject.GetComponent<MeshFilter>().mesh;
@@ -147,6 +168,10 @@ public class terrainMap : MonoBehaviour
         //generate perlin noise here
         float[,] perlinHeight = generatePerlinNoise(250, 5);
 
+        // gets random seed for tree & house locations
+        int[] tree_i_j = object_placement(perlinHeight);
+        int[] house_i_j = object_placement(perlinHeight);
+
         for (int i = 0; i < stride-1; i++)
         {
             for (int j = 0; j < stride-1; j++)
@@ -169,7 +194,41 @@ public class terrainMap : MonoBehaviour
 
                 float cur_y = perlinHeight[i, j];
                 vertices[i * stride + j] = new Vector3(cur_x, cur_y, cur_z);
+
+                if (i == tree_i_j[0] && j == tree_i_j[1])
+                {
+                    tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
+                    tree.transform.localScale = new Vector3(3, 3, 3);
+                    // makes tree right-side up (weird starting values)
+                    tree.transform.Rotate(0, 140, -90);
+                    //adjust to normal
+                }
+
+                if (i == house_i_j[0] && j == house_i_j[1])
+                {
+                    house = Instantiate(house, vertices[i * stride + j], Quaternion.identity) as GameObject;
+                    house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+                }
+
+                /*if (perlinHeight[i, j] > 0.4 && tree_place == 0 && i > 0 && j > 0 && i < 205 && j < 250)
+                {
+                    tree_place = 1;
+                    tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
+                    tree.transform.localScale = new Vector3(3,3,3);
+                    // makes tree right-side up (weird starting values)
+                    tree.transform.Rotate(0, 140, -90);
+                    //adjust to normal
+                    
+                    
+                }*/
+
             }
+        }
+
+        for(int i = 0; i < uvs.Length; i++)
+        {
+            uvs[i] = new Vector2(vertices[i].x, vertices[i].z);
         }
 
         mesh.vertices = vertices;
