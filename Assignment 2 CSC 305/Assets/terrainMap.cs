@@ -194,7 +194,7 @@ public class terrainMap : MonoBehaviour
                 float cur_y = perlinHeight[i, j];
                 vertices[i * stride + j] = new Vector3(cur_x, cur_y, cur_z);
 
-                if (i == tree_i_j[0] && j == tree_i_j[1])
+                /*if (i == tree_i_j[0] && j == tree_i_j[1])
                 {
                     tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
                     tree.transform.localScale = new Vector3(3, 3, 3);
@@ -220,7 +220,7 @@ public class terrainMap : MonoBehaviour
                     house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
                     Vector3 v1 = vertices[i * stride + j];
                     Vector3 v2 = vertices[i * stride + j - 1];
-                    Vector3 v3 = v2-v1;
+                    Vector3 v3 = v2;
                     Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
                     if (norm.y < 0)
                     {
@@ -229,14 +229,30 @@ public class terrainMap : MonoBehaviour
 
                     house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
-                }
+                }*/
 
             }
         }
+        
+        
+        Vector3 v1 = vertices[house_i_j[0] * stride + house_i_j[1]];
+        Vector3 v2 = vertices[house_i_j[0] * stride + house_i_j[1] + 1];
+        Vector3 v3 = vertices[(house_i_j[0] + 1) * stride + house_i_j[1] + 1];
+        Vector3 center = (v1 + v2 + v3) / 3;
+        Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
+
+        if (norm.y < 0)
+        {
+            norm = -norm;
+        }
+
+        house = Instantiate(house, center, Quaternion.identity) as GameObject;
+        house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
 
 
-        for(int i = 0; i < uvs.Length; i++)
+        for (int i = 0; i < uvs.Length; i++)
         {
             uvs[i] = new Vector2(vertices[i].x, vertices[i].z);
         }
