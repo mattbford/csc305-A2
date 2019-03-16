@@ -22,7 +22,7 @@ public class terrainMap : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+       
     }
 
     float interpolation_function(float t)
@@ -48,24 +48,6 @@ public class terrainMap : MonoBehaviour
                 gradients[i, j] = rand_vector.normalized;
             }
         }
-
-        /*Vector2[] edge_centers = new Vector2[4];
-        edge_centers[0] = (new Vector2(0, 1)).normalized;
-        edge_centers[1] = (new Vector2(0, -1)).normalized;
-        edge_centers[2] = (new Vector2(1, 0)).normalized;
-        edge_centers[3] = (new Vector2(-1, 0)).normalized;
-
-        for (int i = 0; i < frequency + 1; ++i)
-        {
-            for (int j = 0; j < frequency + 1; ++j)
-            {
-                float roll = Random.value;
-                if (roll < 0.25f) gradients[i, j] = edge_centers[0];
-                if (roll < 0.5f) gradients[i, j] = edge_centers[1];
-                if (roll < 0.75f) gradients[i, j] = edge_centers[2];
-                else gradients[i, j] = edge_centers[3];
-            }            
-        }*/
 
         float[,] noise = new float[num_sample, num_sample];
         float period = 1.0f / frequency;
@@ -211,53 +193,17 @@ public class terrainMap : MonoBehaviour
                 float cur_y = perlinHeight[i, j];
                 vertices[i * stride + j] = new Vector3(cur_x, cur_y, cur_z);
 
-                /*if (i == tree_i_j[0] && j == tree_i_j[1])
-                {
-                    tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
-                    tree.transform.localScale = new Vector3(3, 3, 3);
-                    // makes tree right-side up (weird starting values)
-                    //tree.transform.Rotate(0, 140, -90);
-                    //adjust to normal *obj will never be spawned on edges so we dont need to cover edge cases
-                    Vector3 v1 = vertices[i * stride + j];
-                    Vector3 v2 = vertices[i * stride + j - 1];
-                    Vector3 v3 = v2 - v1;
-                    Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
-                    if (norm.y < 0)
-                    {
-                        norm = -norm;
-                    }
-
-                    tree.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
-
-                }
-
-                if (i == house_i_j[0] && j == house_i_j[1])
-                {
-                    house = Instantiate(house, vertices[i * stride + j], Quaternion.identity) as GameObject;
-                    house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                    Vector3 v1 = vertices[i * stride + j];
-                    Vector3 v2 = vertices[i * stride + j - 1];
-                    Vector3 v3 = v2;
-                    Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
-                    if (norm.y < 0)
-                    {
-                        norm = -norm;
-                    }
-
-                    house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
-
-                }*/
-
             }
         }
 
+        //House1
         Vector3 center;
         Vector3 norm = calc_norm(house_i_j, vertices, stride, out center);
         house = Instantiate(house, center, Quaternion.identity) as GameObject;
         house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
-        
+        //Tree1
         norm = calc_norm(tree_i_j, vertices, stride, out center);
         tree = Instantiate(tree, center, Quaternion.identity) as GameObject;
         tree.transform.localScale = new Vector3(3, 3, 3);
