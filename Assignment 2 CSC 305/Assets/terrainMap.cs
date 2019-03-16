@@ -99,7 +99,6 @@ public class terrainMap : MonoBehaviour
                 {
                     noise[i, j] = 0.0f;
                 }
-                //Debug.Log(noise[i,j]);
             }            
         }
         
@@ -200,31 +199,42 @@ public class terrainMap : MonoBehaviour
                     tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
                     tree.transform.localScale = new Vector3(3, 3, 3);
                     // makes tree right-side up (weird starting values)
-                    tree.transform.Rotate(0, 140, -90);
-                    //adjust to normal
+                    //tree.transform.Rotate(0, 140, -90);
+                    //adjust to normal *obj will never be spawned on edges so we dont need to cover edge cases
+                    Vector3 v1 = vertices[i * stride + j];
+                    Vector3 v2 = vertices[i * stride + j - 1];
+                    Vector3 v3 = v2 - v1;
+                    Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
+                    if (norm.y < 0)
+                    {
+                        norm = -norm;
+                    }
+
+                    tree.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
+
                 }
 
                 if (i == house_i_j[0] && j == house_i_j[1])
                 {
                     house = Instantiate(house, vertices[i * stride + j], Quaternion.identity) as GameObject;
                     house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                    Vector3 v1 = vertices[i * stride + j];
+                    Vector3 v2 = vertices[i * stride + j - 1];
+                    Vector3 v3 = v2-v1;
+                    Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
+                    if (norm.y < 0)
+                    {
+                        norm = -norm;
+                    }
+
+                    house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
                 }
 
-                /*if (perlinHeight[i, j] > 0.4 && tree_place == 0 && i > 0 && j > 0 && i < 205 && j < 250)
-                {
-                    tree_place = 1;
-                    tree = Instantiate(tree, vertices[i * stride + j], Quaternion.identity) as GameObject;
-                    tree.transform.localScale = new Vector3(3,3,3);
-                    // makes tree right-side up (weird starting values)
-                    tree.transform.Rotate(0, 140, -90);
-                    //adjust to normal
-                    
-                    
-                }*/
-
             }
         }
+
+
 
         for(int i = 0; i < uvs.Length; i++)
         {
