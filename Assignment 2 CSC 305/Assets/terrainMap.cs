@@ -124,6 +124,23 @@ public class terrainMap : MonoBehaviour
         return obj;
     }
 
+    Vector3 calc_norm (int[] obj_i_j, Vector3[] vertices, int stride, out Vector3 center)
+    {
+        //get vertices of subdivision
+        Vector3 v1 = vertices[obj_i_j[0] * stride + obj_i_j[1]];
+        Vector3 v2 = vertices[obj_i_j[0] * stride + obj_i_j[1] + 1];
+        Vector3 v3 = vertices[(obj_i_j[0] + 1) * stride + obj_i_j[1] + 1];
+
+        //place house in center of subdivision
+        center = (v1 + v2 + v3) / 3;
+        Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
+        if (norm.y < 0)
+        {
+            norm = -norm;
+        }
+        return norm;
+    }
+
     void GenerateTerrainMap()
     {
         Mesh mesh = gameObject.GetComponent<MeshFilter>().mesh;
@@ -233,22 +250,19 @@ public class terrainMap : MonoBehaviour
 
             }
         }
-        
-        
-        Vector3 v1 = vertices[house_i_j[0] * stride + house_i_j[1]];
-        Vector3 v2 = vertices[house_i_j[0] * stride + house_i_j[1] + 1];
-        Vector3 v3 = vertices[(house_i_j[0] + 1) * stride + house_i_j[1] + 1];
-        Vector3 center = (v1 + v2 + v3) / 3;
-        Vector3 norm = Vector3.Cross((v3 - v2), (v1 - v2)).normalized;
 
-        if (norm.y < 0)
-        {
-            norm = -norm;
-        }
-
+        Vector3 center;
+        Vector3 norm = calc_norm(house_i_j, vertices, stride, out center);
         house = Instantiate(house, center, Quaternion.identity) as GameObject;
         house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
+
+        
+        norm = calc_norm(tree_i_j, vertices, stride, out center);
+        tree = Instantiate(tree, center, Quaternion.identity) as GameObject;
+        tree.transform.localScale = new Vector3(3, 3, 3);
+        tree.transform.Rotate(0, 0, -90);
+        tree.transform.localRotation *= Quaternion.FromToRotation(Vector3.up, norm);
 
 
 
