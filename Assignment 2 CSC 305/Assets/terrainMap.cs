@@ -9,7 +9,10 @@ public class terrainMap : MonoBehaviour
     public Material terrainMaterial;
     public GameObject tree;
     public GameObject house;
+    public GameObject house2;
+    public GameObject tree2;
     public Camera main_camera;
+    private int[,] occupied;
 
 
     // Start is called before the first frame update
@@ -101,6 +104,7 @@ public class terrainMap : MonoBehaviour
         return noise;
     }
 
+    //with help from Perlin1DGenerator
     float[,] fractal_gen (int num_sample, int fractals, int frequency)
     {
         Vector2[,] gradients = new Vector2[frequency * fractals + 1, frequency * fractals + 1];
@@ -169,12 +173,13 @@ public class terrainMap : MonoBehaviour
         return noise;
     }
 
+    //occupied marks subdivisions that are already taken by an object 1 = taken 0 = empty
     int[] object_placement(float[,] perlinHeight)
     {
         int obj_i = Random.Range(1, 250);
         int obj_j = Random.Range(1, 250);
 
-        while (perlinHeight[obj_i, obj_j] <= 0.1)
+        while (perlinHeight[obj_i, obj_j] <= 0.1 || occupied[obj_i, obj_j] == 1)
         {
             obj_i = Random.Range(1, 250);
             obj_j = Random.Range(1, 250);
@@ -183,6 +188,7 @@ public class terrainMap : MonoBehaviour
         int[] obj = new int[2];
         obj[0] = obj_i;
         obj[1] = obj_j;
+        occupied[obj_i, obj_j] = 1;
 
         return obj;
     }
@@ -246,11 +252,7 @@ public class terrainMap : MonoBehaviour
 
         //generate perlin or fractal noise here
         //float[,] perlinHeight = generatePerlinNoise(250, 5);
-        float[,] perlinHeight = fractal_gen(250, 20, 5);
-
-        // gets random seed for tree & house locations
-        int[] tree_i_j = object_placement(perlinHeight);
-        int[] house_i_j = object_placement(perlinHeight);
+        float[,] perlinHeight = fractal_gen(subdivision, 20, 5);
 
         for (int i = 0; i < stride-1; i++)
         {
@@ -278,22 +280,40 @@ public class terrainMap : MonoBehaviour
             }
         }
 
-        //House1 Normal Calculations
+        occupied = new int[subdivision, subdivision];
+        int[] obj_i_j;
         Vector3 center;
-        Vector3 norm = calc_norm(house_i_j, vertices, stride, out center);
+        Vector3 norm;
+
+        //House1 Normal Calculations
+        obj_i_j = object_placement(perlinHeight); // random seed
+        norm = calc_norm(obj_i_j, vertices, stride, out center);
         house = Instantiate(house, center, Quaternion.identity) as GameObject;
         house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);        
+        house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
         //Tree1 Normal Calculations
-        norm = calc_norm(tree_i_j, vertices, stride, out center);
+        obj_i_j = object_placement(perlinHeight); // random seed
+        norm = calc_norm(obj_i_j, vertices, stride, out center);
         tree = Instantiate(tree, center, Quaternion.identity) as GameObject;
         tree.transform.localScale = new Vector3(3, 3, 3);
         tree.transform.Rotate(0, 0, -90);
         tree.transform.localRotation *= Quaternion.FromToRotation(Vector3.up, norm);
 
-        
+        //house2 ""
+        obj_i_j = object_placement(perlinHeight); // random seed
+        norm = calc_norm(obj_i_j, vertices, stride, out center);
+        house2 = Instantiate(house2, center, Quaternion.identity) as GameObject;
+        house2.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        house2.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
+        //tree2 ""
+        obj_i_j = object_placement(perlinHeight); // random seed
+        norm = calc_norm(obj_i_j, vertices, stride, out center);
+        tree2 = Instantiate(tree2, center, Quaternion.identity) as GameObject;
+        tree2.transform.localScale = new Vector3(3, 3, 3);
+        tree2.transform.Rotate(0, 0, -90);
+        tree2.transform.localRotation *= Quaternion.FromToRotation(Vector3.up, norm);
 
         for (int i = 0; i < uvs.Length; i++)
         {
