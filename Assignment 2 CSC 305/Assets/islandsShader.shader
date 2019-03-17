@@ -11,8 +11,8 @@ Shader "Unlit/islandsShader"
 		_SpecularPow("Specular Power", float) = 1
 		_Specular_coef("Specular Coefficient", float) = 1
 		_AmbientLight("Ambient Lighting", vector) = (0,0,0,0)
-		_WaveSpeed("Wave Speed", float) = 4.0
-		_WaveAmp("Wave Amplitude", float) = 0.8
+		_WaterSpeed("Wave Speed", float) = 4.0
+		_Amplitude("Wave Amplitude", float) = 0.8
 	}
 	SubShader
 	{
@@ -25,8 +25,6 @@ Shader "Unlit/islandsShader"
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			// make fog work
-			#pragma multi_compile_fog
 
 			#include "UnityCG.cginc"
 			#include "Lighting.cginc"
@@ -41,7 +39,6 @@ Shader "Unlit/islandsShader"
 			struct v2f
 			{
 				float2 uv : TEXCOORD0;
-				//UNITY_FOG_COORDS(1)
 				float height : TEXCOORD1;
 				float3 normal : TEXCOORD2;
 				float4 worldpos : TEXCOORD3;
@@ -50,46 +47,37 @@ Shader "Unlit/islandsShader"
 			};
 
 			sampler2D _MainTex;
-			sampler2D _Tex1;    // added
-			sampler2D _Tex2;    // added
-			sampler2D _Tex3;    // added
-			float4 _Thresholds; // added
+			sampler2D _Tex1;
+			sampler2D _Tex2;
+			sampler2D _Tex3;
+			float4 _Thresholds;
 			float _SpecularPow;
 			float _SpecularCoef;
 			float _AmbientLight;
 			float4 _MainTex_ST;
-			float _WaveSpeed;
-			float _WaveAmp;
+			float _WaterSpeed;
+			float _Amplitude;
 
 			v2f vert(appdata v)
 			{
 				v2f o;
 				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.height = v.vertex.y; // added
+				o.height = v.vertex.y;
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-				o.normal = UnityObjectToWorldNormal(v.normal); // added
-				o.worldpos = mul(unity_ObjectToWorld, v.vertex); // added
+				o.normal = UnityObjectToWorldNormal(v.normal);
+				o.worldpos = mul(unity_ObjectToWorld, v.vertex);
 				o.dist = length(WorldSpaceViewDir(v.vertex));
-				// UNITY_TRANSFER_FOG(o,o.vertex);
 
-				// apply wave animation
+				// wave animation
 				//float noiseSample = tex2Dlod(_Tex3, float4(o.uv.xy, 0, 0));
-				//o.vertex.y += sin(_Time*_WaveSpeed*noiseSample)*_WaveAmp;
-				//o.vertex.x += cos(_Time*_WaveSpeed*noiseSample)*_WaveAmp;
+				//o.vertex.y += sin(_Time*_WaterSpeed*noiseSample)*_Amplitude;
+				//o.vertex.x += cos(_Time*_WaterSpeed*noiseSample)*_Amplitude;
 
 				return o;
 			}
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				/*
-				// sample the texture
-				fixed4 col = tex2D(_MainTex, i.uv);
-				// apply fog
-				UNITY_APPLY_FOG(i.fogCoord, col);
-				return col;
-				*/
-
 				fixed4 col0 = tex2D(_MainTex, i.uv);
 				fixed4 col1 = tex2D(_Tex1, i.uv);
 				fixed4 col2 = tex2D(_Tex2, i.uv);

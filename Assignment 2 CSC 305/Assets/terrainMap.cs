@@ -103,11 +103,11 @@ public class terrainMap : MonoBehaviour
 
     float[,] fractal_gen (int num_sample, int fractals, int frequency)
     {
-        Vector2[,] gradients = new Vector2[frequency + 1, frequency + 1];
+        Vector2[,] gradients = new Vector2[frequency * fractals + 1, frequency * fractals + 1];
 
-        for (int i = 0; i < frequency + 1; ++i)
+        for (int i = 0; i < frequency * fractals + 1; ++i)
         {
-            for (int j = 0; j < frequency + 1; ++j)
+            for (int j = 0; j < frequency * fractals + 1; ++j)
             {
                 Vector2 rand_vector = new Vector2(Random.value * 2 - 1, Random.value * 2 - 1);
                 gradients[i, j] = rand_vector.normalized;
@@ -115,8 +115,8 @@ public class terrainMap : MonoBehaviour
         }
 
         float[,] noise = new float[num_sample, num_sample];
-        float period = 1.0f / frequency;               
-            
+        float period = 1.0f / frequency;
+        
         for (int i = 0; i < num_sample; ++i)
         {
             for(int j = 0; j < num_sample; ++j)
@@ -244,9 +244,9 @@ public class terrainMap : MonoBehaviour
         vertices = new Vector3[num_vert];
         uvs = new Vector2[num_vert];
 
-        //generate perlin noise here
+        //generate perlin or fractal noise here
         //float[,] perlinHeight = generatePerlinNoise(250, 5);
-        float[,] perlinHeight = fractal_gen(250, 5, 5);
+        float[,] perlinHeight = fractal_gen(250, 20, 5);
 
         // gets random seed for tree & house locations
         int[] tree_i_j = object_placement(perlinHeight);
