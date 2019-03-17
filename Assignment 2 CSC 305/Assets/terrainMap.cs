@@ -9,6 +9,7 @@ public class terrainMap : MonoBehaviour
     public Material terrainMaterial;
     public GameObject tree;
     public GameObject house;
+    public Camera main_camera;
 
 
     // Start is called before the first frame update
@@ -22,7 +23,12 @@ public class terrainMap : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
+        float distance_cam = Vector3.Dot((tree.transform.position - main_camera.transform.position), main_camera.transform.position);
+        if (distance_cam / 10 >= 1f)
+        {
+            Color col = tree.GetComponent<MeshRenderer>().material.color / (distance_cam / 10);
+            tree.GetComponent<MeshRenderer>().material.color = col;//= (distance_cam / 10);
+        }
     }
 
     float interpolation_function(float t)
@@ -86,6 +92,52 @@ public class terrainMap : MonoBehaviour
         
 
         return noise;
+    }
+
+    float[,] fractal_gen (int num_sample, float[,] perlinHeight, int fractals)
+    {
+        float[,] fractal = perlinHeight;
+        int counter = 0;
+        int quarters = num_sample / 2;
+        for (int f = 0; f < fractals; f++)
+        {
+            counter = 0;
+            perlinHeight = fractal;
+            for (int i = 0; i < quarters; i++)
+            {                
+                for (int j = 0; j < quarters; j++)
+                {
+                    if (j == quarters && i == quarters)
+                    {
+                        if(counter != 3)
+                        {
+                            i = 0;
+                            j = 0;
+                            counter++;
+                        }                   
+                    }
+                    if (counter == 0)
+                    {
+                        fractal[i, j] = perlinHeight[2 * i, 2 * j] / 2;
+                    }
+                    else if (counter == 1)
+                    {
+                        fractal[i + quarters, j] = perlinHeight[2 * i, 2 * j] / 2;
+                    }
+                    else if (counter == 2)
+                    {
+                        fractal[i, j + quarters] = perlinHeight[2 * i, 2 * j] / 2;
+                    }
+                    else
+                    {
+                        fractal[i + quarters, j + quarters] = perlinHeight[2 * i, 2 * j] / 2;
+                    }
+                    
+                }
+            }
+
+        }
+        return fractal;
     }
 
     int[] object_placement(float[,] perlinHeight)
@@ -165,6 +217,7 @@ public class terrainMap : MonoBehaviour
 
         //generate perlin noise here
         float[,] perlinHeight = generatePerlinNoise(250, 5);
+        perlinHeight = fractal_gen(250, perlinHeight, 1);
 
         // gets random seed for tree & house locations
         int[] tree_i_j = object_placement(perlinHeight);
@@ -203,6 +256,15 @@ public class terrainMap : MonoBehaviour
         house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
 
+        /*float distance_cam = Vector3.Dot((house.transform.position - main_camera.transform.position), main_camera.transform.forward);
+        if(distance_cam / 10 >= 1f)
+        {
+            Color col = house.GetComponent<MeshRenderer>().material.color;
+            col /= (distance_cam / 10);
+            house.GetComponent<MeshRenderer>().material.color = col;
+        }*/
+        
+
         //Tree1
         norm = calc_norm(tree_i_j, vertices, stride, out center);
         tree = Instantiate(tree, center, Quaternion.identity) as GameObject;
@@ -210,6 +272,7 @@ public class terrainMap : MonoBehaviour
         tree.transform.Rotate(0, 0, -90);
         tree.transform.localRotation *= Quaternion.FromToRotation(Vector3.up, norm);
 
+        
 
 
         for (int i = 0; i < uvs.Length; i++)

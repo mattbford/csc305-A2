@@ -11,6 +11,8 @@ Shader "Unlit/islandsShader"
 		_SpecularPow("Specular Power", float) = 1
 		_Specular_coef("Specular Coefficient", float) = 1
 		_AmbientLight("Ambient Lighting", vector) = (0,0,0,0)
+		_WaveSpeed("Wave Speed", float) = 4.0
+		_WaveAmp("Wave Amplitude", float) = 0.8
 	}
 	SubShader
 	{
@@ -44,6 +46,7 @@ Shader "Unlit/islandsShader"
 				float3 normal : TEXCOORD2;
 				float4 worldpos : TEXCOORD3;
 				float4 vertex : SV_POSITION;
+				float dist : TEXTCOORD1;
 			};
 
 			sampler2D _MainTex;
@@ -55,6 +58,8 @@ Shader "Unlit/islandsShader"
 			float _SpecularCoef;
 			float _AmbientLight;
 			float4 _MainTex_ST;
+			float _WaveSpeed;
+			float _WaveAmp;
 
 			v2f vert(appdata v)
 			{
@@ -64,7 +69,14 @@ Shader "Unlit/islandsShader"
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				o.normal = UnityObjectToWorldNormal(v.normal); // added
 				o.worldpos = mul(unity_ObjectToWorld, v.vertex); // added
+				o.dist = length(WorldSpaceViewDir(v.vertex));
 				// UNITY_TRANSFER_FOG(o,o.vertex);
+
+				// apply wave animation
+				//float noiseSample = tex2Dlod(_Tex3, float4(o.uv.xy, 0, 0));
+				//o.vertex.y += sin(_Time*_WaveSpeed*noiseSample)*_WaveAmp;
+				//o.vertex.x += cos(_Time*_WaveSpeed*noiseSample)*_WaveAmp;
+
 				return o;
 			}
 
@@ -114,6 +126,11 @@ Shader "Unlit/islandsShader"
 					float specular = pow(d, _SpecularPow) * _SpecularCoef;
 					fragment_color.xyz += _LightColor0.xyz * specular;
 				}
+
+				//saturation based on distance *need to implement for objects as well
+				if (i.dist /10 >= 1) {
+					fragment_color.xyz /= (i.dist / 10);
+				}				
 				return fragment_color;
 			}
 			ENDCG

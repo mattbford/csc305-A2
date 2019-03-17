@@ -1,5 +1,4 @@
 *
 !.gitignore
 !.gitattributes
-!/Assets/*.*
-!/Assets/cameraMovement.cs
+!Assignment 2 CSC 305/Assets/*.*
