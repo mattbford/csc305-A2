@@ -128,9 +128,8 @@ Shader "Unlit/islandsShader"
 				}
 
 				//saturation based on distance *need to implement for objects as well
-				if (i.dist /10 >= 1) {
-					fragment_color.xyz /= (i.dist / 10);
-				}				
+				float4 col_gray = (0.5, 0.5, 0.5, 0.5);
+				fragment_color.xyz = lerp(fragment_color.rgb, col_gray.rgb, saturate(i.dist *= 0.05f));
 				return fragment_color;
 			}
 			ENDCG

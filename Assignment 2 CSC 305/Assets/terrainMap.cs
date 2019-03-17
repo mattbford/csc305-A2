@@ -23,12 +23,19 @@ public class terrainMap : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float distance_cam = Vector3.Dot((tree.transform.position - main_camera.transform.position), main_camera.transform.position);
-        if (distance_cam / 10 >= 1f)
-        {
-            Color col = tree.GetComponent<MeshRenderer>().material.color / (distance_cam / 10);
-            tree.GetComponent<MeshRenderer>().material.color = col;//= (distance_cam / 10);
-        }
+        /*float distance_cam = Vector3.Dot((tree.transform.position - main_camera.transform.position), main_camera.transform.forward);
+        Color col = tree.GetComponent<MeshRenderer>().material.color;
+        Color col_gray = new Color(0.5f, 0.5f, 0.5f);
+        col = Color.Lerp(col, col_gray, distance_cam);
+        tree.GetComponent<MeshRenderer>().material.color = col;*/
+
+        
+        /*distance_cam = Vector3.Dot((house.transform.position - main_camera.transform.position), main_camera.transform.forward);
+        col = house.GetComponentsInChildren<MeshRenderer>().material.color;
+        col_gray = new Color(0.5f, 0.5f, 0.5f);
+        col = Color.Lerp(col, col_gray, distance_cam);
+        house.GetComponent<MeshRenderer>().material.color = col;*/
+
     }
 
     float interpolation_function(float t)
@@ -94,50 +101,72 @@ public class terrainMap : MonoBehaviour
         return noise;
     }
 
-    float[,] fractal_gen (int num_sample, float[,] perlinHeight, int fractals)
+    float[,] fractal_gen (int num_sample, int fractals, int frequency)
     {
-        float[,] fractal = perlinHeight;
-        int counter = 0;
-        int quarters = num_sample / 2;
-        for (int f = 0; f < fractals; f++)
+        Vector2[,] gradients = new Vector2[frequency + 1, frequency + 1];
+
+        for (int i = 0; i < frequency + 1; ++i)
         {
-            counter = 0;
-            perlinHeight = fractal;
-            for (int i = 0; i < quarters; i++)
-            {                
-                for (int j = 0; j < quarters; j++)
+            for (int j = 0; j < frequency + 1; ++j)
+            {
+                Vector2 rand_vector = new Vector2(Random.value * 2 - 1, Random.value * 2 - 1);
+                gradients[i, j] = rand_vector.normalized;
+            }
+        }
+
+        float[,] noise = new float[num_sample, num_sample];
+        float period = 1.0f / frequency;               
+            
+        for (int i = 0; i < num_sample; ++i)
+        {
+            for(int j = 0; j < num_sample; ++j)
+            {
+                // Fractal (x,y) = Perlin(2^i x, 2^i y)/2^i
+                int f = 1;
+                float n = 0;
+                int z = 0;
+                float step = 1.0f / num_sample;
+                for (int x = 0; x < fractals; x++)
                 {
-                    if (j == quarters && i == quarters)
-                    {
-                        if(counter != 3)
-                        {
-                            i = 0;
-                            j = 0;
-                            counter++;
-                        }                   
-                    }
-                    if (counter == 0)
-                    {
-                        fractal[i, j] = perlinHeight[2 * i, 2 * j] / 2;
-                    }
-                    else if (counter == 1)
-                    {
-                        fractal[i + quarters, j] = perlinHeight[2 * i, 2 * j] / 2;
-                    }
-                    else if (counter == 2)
-                    {
-                        fractal[i, j + quarters] = perlinHeight[2 * i, 2 * j] / 2;
-                    }
-                    else
-                    {
-                        fractal[i + quarters, j + quarters] = perlinHeight[2 * i, 2 * j] / 2;
-                    }
-                    
+                    int frac_i = f * i;
+                    int frac_j = f * j;
+                    step = 1.0f / (num_sample * f);
+
+                    // Math from slides + Perlin1DGenerator
+                    float location_period_x = step * frac_i / period;
+                    float location_period_y = step * frac_j / period;
+                    int cell_x = Mathf.FloorToInt(location_period_x);
+                    int cell_y = Mathf.FloorToInt(location_period_y);
+                    float in_cell_location_x = location_period_x - cell_x;
+                    float in_cell_location_y = location_period_y - cell_y;
+                    Vector2 position = new Vector2(in_cell_location_x, in_cell_location_y);
+
+                    Vector2 a = position - (new Vector2(0, 0));
+                    Vector2 b = position - (new Vector2(1, 0));
+                    Vector2 c = position - (new Vector2(0, 1));
+                    Vector2 d = position - (new Vector2(1, 1));
+                    float s = Vector2.Dot(gradients[cell_x, cell_y], a);
+                    float t = Vector2.Dot(gradients[cell_x + 1, cell_y], b);
+                    float u = Vector2.Dot(gradients[cell_x, cell_y + 1], c);
+                    float v = Vector2.Dot(gradients[cell_x + 1, cell_y + 1], d);
+
+                    float st = Mix(s, t, interpolation_function(in_cell_location_x));
+                    float uv = Mix(u, v, interpolation_function(in_cell_location_x));
+                    n += Mix(st, uv, interpolation_function(in_cell_location_y)) / f;
+                    z += 1 / f;
+                    f *= 2;
+                }
+                if(n / z > 0)
+                {
+                    noise[i, j] = n / z;
+                }
+                else
+                {
+                    noise[i, j] = 0;
                 }
             }
-
         }
-        return fractal;
+        return noise;
     }
 
     int[] object_placement(float[,] perlinHeight)
@@ -216,8 +245,8 @@ public class terrainMap : MonoBehaviour
         uvs = new Vector2[num_vert];
 
         //generate perlin noise here
-        float[,] perlinHeight = generatePerlinNoise(250, 5);
-        perlinHeight = fractal_gen(250, perlinHeight, 1);
+        //float[,] perlinHeight = generatePerlinNoise(250, 5);
+        float[,] perlinHeight = fractal_gen(250, 5, 5);
 
         // gets random seed for tree & house locations
         int[] tree_i_j = object_placement(perlinHeight);
@@ -249,23 +278,14 @@ public class terrainMap : MonoBehaviour
             }
         }
 
-        //House1
+        //House1 Normal Calculations
         Vector3 center;
         Vector3 norm = calc_norm(house_i_j, vertices, stride, out center);
         house = Instantiate(house, center, Quaternion.identity) as GameObject;
         house.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);
+        house.transform.localRotation = Quaternion.FromToRotation(Vector3.up, norm);        
 
-        /*float distance_cam = Vector3.Dot((house.transform.position - main_camera.transform.position), main_camera.transform.forward);
-        if(distance_cam / 10 >= 1f)
-        {
-            Color col = house.GetComponent<MeshRenderer>().material.color;
-            col /= (distance_cam / 10);
-            house.GetComponent<MeshRenderer>().material.color = col;
-        }*/
-        
-
-        //Tree1
+        //Tree1 Normal Calculations
         norm = calc_norm(tree_i_j, vertices, stride, out center);
         tree = Instantiate(tree, center, Quaternion.identity) as GameObject;
         tree.transform.localScale = new Vector3(3, 3, 3);
